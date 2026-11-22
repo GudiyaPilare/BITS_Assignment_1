@@ -8,6 +8,14 @@
 
 **Input**: User description: "Create the Part 1A deterministic Smart Todo and Task Management REST API."
 
+## Clarifications
+
+### Session 2026-11-23
+
+- Q: Should task data survive an application restart? → A: Tasks persist only while the application process is running; restart clears them.
+- Q: Which task ID format should the API generate? → A: Server-generated UUID v4 strings.
+- Q: Should clients be able to clear existing optional description or due date values with null? → A: Yes, for PATCH updates only. Sending null clears the existing value; omission leaves it unchanged. Null is rejected during task creation. Required fields cannot be null.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Create and View a Task (Priority: P1)
@@ -72,6 +80,8 @@ A user or client sends malformed JSON or invalid task data and receives consiste
 2. **Given** a create request with a missing or whitespace-only title, **When** `POST /tasks` is requested, **Then** the response is `400 Bad Request` and the error identifies `title`.
 3. **Given** a task update with an unsupported priority, invalid due date, or attempted ID change, **When** `PATCH /tasks/{id}` is requested, **Then** the response is `400 Bad Request`, field-specific details are returned, and no fields change.
 4. **Given** an invalid or malformed task ID, **When** a task-ID endpoint is requested, **Then** the response is `400 Bad Request`; for a correctly formatted but unknown ID, the response is `404 Not Found`.
+5. **Given** an existing task with a description and due date, **When** `PATCH /tasks/{id}` contains `description: null` and `dueDate: null`, **Then** the response is `200 OK`, both fields are cleared to `null`, and all omitted fields remain unchanged.
+6. **Given** a valid task title and `description: null` or `dueDate: null`, **When** `POST /tasks` is requested, **Then** the response is `400 Bad Request` and no task is created.
 
 ---
 
@@ -85,7 +95,9 @@ A user or client sends malformed JSON or invalid task data and receives consiste
 - A due date must use ISO 8601 calendar-date form `YYYY-MM-DD` and must be a real calendar date; time components and relative dates are rejected.
 - An update body must contain at least one allowed, mutable field.
 - An update must not modify `id`, `status`, or any other field through the general update endpoint.
-- Null is rejected for required fields and for optional fields that are supplied unless the API contract explicitly permits clearing an optional field.
+- Null is rejected for `title`, `description`, and `dueDate` in `POST /tasks`; the optional fields may instead be omitted.
+- Null is accepted for existing `description` and `dueDate` fields in `PATCH /tasks/{id}` to clear those values; null is rejected for `title`, status, and immutable fields.
+- When a field is omitted from an update, its existing value remains unchanged.
 - Repeated create requests with identical bodies produce distinct task identities and separate task resources; no implicit deduplication is permitted.
 - Empty collections return an array with no entries and `200 OK`.
 - Invalid content type or unreadable JSON is handled as `400 Bad Request`.
@@ -96,7 +108,7 @@ A user or client sends malformed JSON or invalid task data and receives consiste
 
 ### Functional Requirements
 
-- **FR-001**: The system MUST create a task from a JSON request containing a title and optional description, priority, and due date.
+- **FR-001**: The system MUST create a task from a JSON request containing a title and optional description, priority, and due date; `description` and `dueDate` MUST be strings when supplied and MUST NOT be null.
 - **FR-002**: The system MUST assign each task a unique, non-empty, immutable ID and return it in the create and task representation responses.
 - **FR-003**: The system MUST default a task priority to `Medium` when priority is omitted.
 - **FR-004**: The system MUST default a task status to `Pending` when status is omitted because status is not a create-time field.
@@ -116,17 +128,20 @@ A user or client sends malformed JSON or invalid task data and receives consiste
 - **FR-018**: The system MUST preserve task values exactly except for explicitly supplied field changes and server-managed ID assignment.
 - **FR-019**: The system MUST treat repeated reads and failed mutations deterministically against the same application state.
 - **FR-020**: The system MUST implement every contract as an independently executable harness scenario linked to its functional requirement IDs.
+- **FR-021**: The system SHALL retain tasks only in application memory and SHALL clear all task state on application restart.
+- **FR-022**: The system SHALL generate server-side UUID v4 strings for task IDs and SHALL reject malformed or non-UUID-v4 task IDs.
+- **FR-023**: A general update MAY set `description` or `dueDate` to `null` to clear it, SHALL leave omitted mutable fields unchanged, SHALL reject `null` for `title`, and SHALL reject `null` for `description` or `dueDate` during task creation.
 
 ### API Contract
 
-The API uses JSON request and response bodies. All dates use `YYYY-MM-DD`. Omitted optional values remain absent in create payloads and represented as `null` in task response bodies.
+The API uses JSON request and response bodies. All dates use `YYYY-MM-DD`. On `POST /tasks`, omitted optional fields use their defined defaults or `null` in response representation, but supplied `description` or `dueDate` values cannot be null. On `PATCH /tasks/{id}`, omitted fields remain unchanged and `null` clears `description` or `dueDate`.
 
 | Method | Endpoint | Success | Request Body | Response |
 |---|---|---:|---|---|
 | `POST` | `/tasks` | `201` | `{ "title": string, "description"?: string, "priority"?: "Low"|"Medium"|"High", "dueDate"?: string }` | Task object |
 | `GET` | `/tasks/{id}` | `200` | None | Task object |
 | `GET` | `/tasks` | `200` | None | Array of task objects |
-| `PATCH` | `/tasks/{id}` | `200` | Mutable fields: `title`, `description`, `priority`, `dueDate` | Task object |
+| `PATCH` | `/tasks/{id}` | `200` | `{ "title"?: string, "description"?: string|null, "priority"?: "Low"|"Medium"|"High", "dueDate"?: string|null }` | Task object |
 | `PATCH` | `/tasks/{id}/status` | `200` | `{ "status": "Pending"|"Completed" }` | Task object |
 | `DELETE` | `/tasks/{id}` | `204` | None | No response body |
 
@@ -172,12 +187,12 @@ A detail object SHALL contain `field`, `rule`, and `message`. Field names SHALL 
 ### Validation Rules
 
 - Title: required for create; string; 1-200 characters after trimming; leading and trailing whitespace is permitted in input but the stored and returned title SHALL contain no such outer whitespace.
-- Description: optional string; maximum 2,000 characters; no input normalization beyond JSON string handling.
+- Description: create value is an optional string with maximum 2,000 characters; null is rejected; update value is an optional string or explicit `null`, with `null` clearing an existing value and omission leaving it unchanged.
 - Priority: optional string; exact values `Low`, `Medium`, or `High`; default `Medium`.
 - Status: exact values `Pending` or `Completed`; default `Pending` for created tasks; cannot be supplied during create or general update.
-- Due date: optional string or explicit `null`; exact `YYYY-MM-DD`; must represent a valid Gregorian calendar date.
-- Task ID: server-generated non-empty string; request IDs must match the exact server-generated format and contain no path separators.
-- Create body: JSON object only; unknown fields are rejected; title is required; description, priority, and dueDate may be omitted.
+- Due date: create value is an optional string or omission; explicit `null` is rejected. Update value is an optional string or explicit `null`; an update string must exact `YYYY-MM-DD` and represent a valid Gregorian calendar date, while `null` clears the existing value and omission leaves it unchanged.
+- Task ID: server-generated UUID v4 string; request IDs must match canonical UUID v4 format and contain no path separators.
+- Create body: JSON object only; unknown fields are rejected; title is required; description and dueDate are optional strings and cannot be null; priority may be omitted.
 - Update body: JSON object only; at least one of title, description, priority, or dueDate must be supplied; unknown fields and immutable fields are rejected.
 - Status body: JSON object with exactly one `status` field; unknown fields are rejected.
 - Request body: JSON object or array constraints must match the endpoint; maximum request size is 64 KiB.
@@ -212,39 +227,31 @@ A detail object SHALL contain `field`, `rule`, and `message`. Field names SHALL 
 
 - **SC-001**: In an independent harness, 100% of defined create, retrieve, list, update, status, delete, and invalid-input acceptance scenarios execute and return the specified status and body contract.
 - **SC-002**: At least 95% of independently derived deterministic functional scenarios pass in the initial positive-validation run after implementation; this criterion does not permit weakening tests or thresholds to obtain a pass.
-- **SC-003**: Every functional requirement FR-001 through FR-020 has at least one named, reproducible harness test or contract scenario.
+- **SC-003**: Every functional requirement FR-001 through FR-023 has at least one named, reproducible harness test or contract scenario.
 - **SC-004**: Every API status path documented in this specification is exercised by at least one harness scenario.
 - **SC-005**: No security-oriented harness scenario detects secrets, unsafe reflection of input, stack-trace disclosure, or stored-state mutation after validation failure.
-- **SC-006**: Repeating identical valid request sequences against reset and identical initial states produces byte-equivalent JSON response bodies and identical final task collections.
+- **SC-006**: Repeating identical valid request sequences against reset and identical initial application state SHALL produce exact equality of all non-ID response fields and all final task data after normalization. Each run SHALL generate IDs in valid UUID v4 format, and all generated IDs SHALL be unique within that run. Generated IDs SHALL be normalized consistently to placeholders in both response bodies and final task collections before cross-run comparison.
 - **SC-007**: Human reviewers can trace specification requirements, implementation points, harness checks, and evidence using repository documentation alone.
 
 ## Assumptions
 
 - The API is a local REST service used without authentication for assignment demonstration; authentication and authorization are outside the feature scope.
-- Task state is held by the application for the duration of its configured test or runtime environment; persistence across process restarts is not required unless added during planning.
-- IDs are opaque to clients and are compared as exact strings; the API does not prescribe a particular generated format in this specification.
+- Task state is held in memory for the application process lifetime and is cleared when the application restarts.
+- IDs are opaque UUID v4 strings generated by the server; harness tests validate UUID format and uniqueness without fixed ID values.
 - The empty task collection is returned as `[]` with `200 OK`.
-- Optional fields omitted by a client are returned as `null` rather than as an omitted property.
+- Optional fields omitted from a create request use their defined defaults or `null` representation; omitted fields in an update leave existing values unchanged.
 - Request JSON is UTF-8 encoded; invalid UTF-8 is treated as malformed content.
 - Due dates are calendar values and do not represent times or time zones.
 - Task ID ordering for lists is lexicographic and is independent of creation time.
 - The general update endpoint does not change status; status changes use the dedicated endpoint.
 - This specification records contract decisions for future plans and does not authorize application code, test code, or harness code.
 
-## Unresolved Design Decisions
-
-The following items require resolution in `/speckit-clarify` before implementation planning is completed:
-
-- **UD-001**: Should task state persist across application restarts, or is in-memory state for the process lifetime sufficient for this assignment?
-- **UD-002**: What exact opaque ID format should the implementation generate: UUID, monotonic integer, or another unique format?
-- **UD-003**: Should clients be able to clear an existing optional description or due date by sending `null`, or must optional fields only be omitted or changed to string values?
-
 ## Traceability
 
-- Task creation: FR-001 through FR-004, FR-012 through FR-020.
-- Task retrieval and listing: FR-005, FR-006, FR-019, FR-020.
-- Task updates: FR-007 through FR-009, FR-012 through FR-020.
+- Task creation: FR-001 through FR-004, FR-012 through FR-023.
+- Task retrieval and listing: FR-005, FR-006, FR-019, FR-022, FR-023.
+- Task updates: FR-007 through FR-009, FR-012 through FR-023.
 - Status changes: FR-010, FR-012 through FR-020.
 - Deletion: FR-011 through FR-020.
-- Validation and malformed requests: FR-012 through FR-017, FR-020, NFR-001 through NFR-005.
-- Determinism and evidence: FR-018 through FR-020, NFR-001, NFR-002, NFR-006 through NFR-009, SC-001 through SC-007.
+- Validation and malformed requests: FR-012 through FR-017, FR-020, FR-022 through FR-023, NFR-001 through NFR-005.
+- Determinism and evidence: FR-018 through FR-023, NFR-001, NFR-002, NFR-006 through NFR-009, SC-001 through SC-007.

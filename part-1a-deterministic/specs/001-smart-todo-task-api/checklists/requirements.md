@@ -31,9 +31,9 @@
 
 ## Clarification Status
 
-The specification intentionally records three design decisions in the **Unresolved Design Decisions** section for a later clarification pass. This is not unresolved placeholder syntax in the specification template and does not block specification creation.
+All three design decisions from the clarification pass are resolved and integrated into the specification: in-memory task lifetime, UUID v4 task IDs, and PATCH-only null clearing for optional description and due date fields. POST rejects null for both optional fields.
 
 ## Notes
 
-- Ready for `/speckit-clarify` to resolve UD-001 through UD-003.
-- Implementation planning should not begin until clarification decisions are resolved.
+- Clarification is complete; no unresolved `[NEEDS CLARIFICATION]` markers remain.
+- Ready to proceed to `/speckit-plan`.
