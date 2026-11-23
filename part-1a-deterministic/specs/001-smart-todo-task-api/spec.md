@@ -100,7 +100,8 @@ A user or client sends malformed JSON or invalid task data and receives consiste
 - When a field is omitted from an update, its existing value remains unchanged.
 - Repeated create requests with identical bodies produce distinct task identities and separate task resources; no implicit deduplication is permitted.
 - Empty collections return an array with no entries and `200 OK`.
-- Invalid content type or unreadable JSON is handled as `400 Bad Request`.
+- Malformed, unreadable, or invalid UTF-8 JSON is handled as `400 Bad Request`.
+- Missing `Content-Type` or unsupported/non-`application/json` `Content-Type` is handled as `415 Unsupported Media Type`.
 - Error responses must not echo secrets, raw parser internals, stack traces, credentials, or implementation paths.
 - Two identical requests against identical state must produce the same response data and state transition.
 
@@ -177,11 +178,11 @@ A detail object SHALL contain `field`, `rule`, and `message`. Field names SHALL 
 - `201 Created`: Task created successfully; no `Location` header is required.
 - `200 OK`: Read or mutation succeeded.
 - `204 No Content`: Existing task deleted; response body is empty.
-- `400 Bad Request`: Malformed JSON, unsupported content type, invalid field value, malformed ID, or empty update body.
+- `400 Bad Request`: Malformed or unreadable JSON, invalid field value, malformed ID, or empty update body.
 - `404 Not Found`: Correctly formatted ID does not exist or route resource is missing.
 - `405 Method Not Allowed`: Known route received an unsupported HTTP method.
 - `413 Content Too Large`: Request body exceeds the maximum allowed size.
-- `415 Unsupported Media Type`: Request declares a media type other than `application/json`.
+- `415 Unsupported Media Type`: Missing `Content-Type` or unsupported/non-`application/json` `Content-Type`.
 - `500 Internal Server Error`: Unexpected server failure; must not expose internals.
 
 ### Validation Rules
@@ -198,7 +199,7 @@ A detail object SHALL contain `field`, `rule`, and `message`. Field names SHALL 
 - Request body: JSON object or array constraints must match the endpoint; maximum request size is 64 KiB.
 - String fields must reject control characters below U+0020 except JSON escaping must not allow them in title or description.
 - Numeric values, booleans, arrays, and objects are rejected wherever a string or object field is required.
-- Requests without a JSON content type return `415 Unsupported Media Type` before body processing.
+- Requests with missing `Content-Type` or unsupported/non-`application/json` `Content-Type` return `415 Unsupported Media Type` before body processing.
 - Valid JSON with a trailing extra value is malformed and rejected.
 
 ### Non-Functional Requirements
