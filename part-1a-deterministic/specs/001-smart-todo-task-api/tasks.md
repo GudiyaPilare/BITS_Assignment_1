@@ -142,8 +142,11 @@
 
 - [ ] T041 [P] Implement normalized UUID v4 cross-run comparison in `part-1a-deterministic/harness/run.js` for SC-006 response and final-state comparisons.
 - [ ] T042 [P] Add initial-failure evidence capture in `part-1a-deterministic/evidence/initial/` and preserve it without rewriting it.
-- [ ] T043 [P] Add bounded repair finding and attempt output handling in `part-1a-deterministic/evidence/repairs/` with a configured maximum attempt count.
-- [ ] T044 [P] Add final revalidation evidence and a machine-readable summary in `part-1a-deterministic/evidence/final/`.
+- [ ] T043 [P] Add bounded repair finding and attempt output handling in `part-1a-deterministic/evidence/repairs/`, allowing a maximum of 2 automatic repair attempts and stopping for human review if validation still fails.
+- [ ] T048 [P] Implement automatic repair orchestration that reruns the complete independent validation pipeline after every repair in `part-1a-deterministic/harness/run.js`, and records the revalidation result before any next attempt.
+- [ ] T049 [P] Add an explicit harness timeout check in `part-1a-deterministic/harness/run.js` that rejects any 64 KiB request or scenario response taking more than 2 seconds in local test conditions.
+- [ ] T050 [P] Make the 95% initial-pass threshold explicit in `part-1a-deterministic/harness/run.js`, requiring at least 95% of independently derived deterministic functional scenarios to pass before the initial positive-validation result is classified as passing.
+- [ ] T051 Record the final human ACCEPT/REJECT decision and supporting evidence in `part-1a-deterministic/evidence/final/`; human decision is required and cannot be inferred from automated success.
 - [ ] T045 Update `part-1a-deterministic/README.md` with setup, execution, test, harness, evidence, and human-review instructions.
 - [ ] T046 Run the complete relevant test and harness pipeline, and document actual results only in `part-1a-deterministic/evidence/final/`.
 - [ ] T047 Verify traceability from FR-001 through FR-023 and SC-001 through SC-007 to named tasks and harness scenarios.
