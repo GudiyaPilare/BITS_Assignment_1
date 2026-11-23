@@ -1,0 +1,14 @@
+{
+  "timestamp": "2026-11-23T17:37:26.291Z",
+  "totalCases": 1,
+  "passed": 0,
+  "failed": 0,
+  "errors": 1,
+  "results": [
+    {
+      "id": "TC01",
+      "status": "ERROR",
+      "error": "{\"error\":{\"code\":503,\"message\":\"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.\",\"status\":\"UNAVAILABLE\"}}"
+    }
+  ]
+}

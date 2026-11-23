@@ -1,0 +1,16 @@
+{
+  "status": "pass",
+  "initialFailureEvidencePreserved": true,
+  "deterministicTests": {
+    "passCount": 15,
+    "failCount": 0,
+    "passPercent": 100
+  },
+  "twoSecondLimitMs": 2000,
+  "findings": [],
+  "humanAcceptance": {
+    "status": "PENDING",
+    "acceptedBy": null,
+    "evidence": null
+  }
+}

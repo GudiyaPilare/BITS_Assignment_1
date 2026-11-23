@@ -1,0 +1,20 @@
+{
+  "attempt": 1,
+  "status": "repaired",
+  "findings": [
+    {
+      "requirementIds": ["SC-002", "FR-020", "NFR-002"],
+      "testId": "harness-test-count",
+      "severity": "CRITICAL",
+      "message": "Harness could not count successful tests because it passed unexpanded glob arguments to Node and used checkmark-only parsing.",
+      "action": "Pass explicit test files to node --test and parse the structured pass/fail summary instead of visual checkmarks."
+    },
+    {
+      "requirementIds": ["FR-020"],
+      "testId": "static-spec-path",
+      "severity": "HIGH",
+      "message": "Static harness used a specification path that did not include the feature directory.",
+      "action": "Point the static check to specs/001-smart-todo-task-api/spec.md."
+    }
+  ]
+}

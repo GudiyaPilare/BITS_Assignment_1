@@ -1,0 +1,16 @@
+{
+  "attempt": 0,
+  "phase": "initial",
+  "status": "failed",
+  "findings": [
+    {
+      "requirementIds": ["FR-020", "NFR-002"],
+      "testId": "npm-test-script",
+      "severity": "HIGH",
+      "message": "Node test runner received directory arguments and treated tests/unit and tests/contract as modules.",
+      "action": "Change the test script to pass explicit test file globs, for example tests/unit/*.test.js and tests/contract/*.test.js.",
+      "command": "npm test",
+      "observed": "0 tests passed; 2 directory-module failures"
+    }
+  ]
+}

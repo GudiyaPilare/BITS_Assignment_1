@@ -1,0 +1,19 @@
+{
+  "status": "automated_validation_passed",
+  "testStatus": "12 passed, 0 failed",
+  "passPercent": 100,
+  "thresholdPercent": 95,
+  "twoSecondLimitMs": 2000,
+  "initialFailureEvidence": "evidence/initial/test-failure.json",
+  "repairEvidence": [
+    "evidence/repairs/repair-1.json",
+    "evidence/repairs/repair-2.json"
+  ],
+  "harnessReport": "evidence/final/harness-report.json",
+  "humanAcceptance": {
+    "status": "PENDING",
+    "decision": null,
+    "evidence": null,
+    "acceptedBy": null
+  }
+}

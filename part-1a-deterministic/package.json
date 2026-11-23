@@ -1,0 +1,15 @@
+{
+  "name": "bits-part-1a-smart-todo-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test tests/unit/*.test.js tests/contract/*.test.js",
+    "harness": "node harness/run.js",
+    "validate": "npm run test && npm run harness"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

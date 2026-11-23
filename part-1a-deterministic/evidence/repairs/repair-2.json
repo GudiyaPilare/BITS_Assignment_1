@@ -1,0 +1,19 @@
+{
+  "attempt": 2,
+  "status": "repaired",
+  "completePipelineRevalidation": "passed",
+  "findings": [
+    {
+      "requirementIds": ["SC-002", "FR-020", "NFR-002"],
+      "testId": "harness-test-count",
+      "severity": "CRITICAL",
+      "message": "The harness counted zero tests because Node summary lines were parsed before the repair used fallback matching.",
+      "action": "Parse pass/fail/test summary lines with fallback totals, then rerun the complete harness."
+    }
+  ],
+  "result": {
+    "passCount": 12,
+    "failCount": 0,
+    "passPercent": 100
+  }
+}

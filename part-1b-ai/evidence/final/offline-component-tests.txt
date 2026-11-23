@@ -1,0 +1,15 @@
+Schema validation tests
+Valid case: { pass: true, errors: [] }
+Invalid case: {
+  pass: false,
+  errors: [
+    'Title must be a non-empty string',
+    'Invalid priority',
+    'Due date must be null or a valid YYYY-MM-DD date',
+    'Clarification question required when clarification is needed'
+  ]
+}
+Offline component tests
+Schema: PASS
+Invariants: PASS
+Semantic: PASS
